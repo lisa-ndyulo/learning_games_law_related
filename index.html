@@ -193,12 +193,12 @@
       </select>
 
       <label class="label" for="functionInput">2) Add function(s)</label>
-      <input id="functionInput" type="text" placeholder="Example: Implements laws and policy" />
+      <input id="functionInput" type="text" placeholder="Add a function" />
       <button class="btn" id="addFunction">Add function</button>
       <div class="chips" id="functionList"></div>
 
       <label class="label" for="memberInput">3) Add member(s)</label>
-      <input id="memberInput" type="text" placeholder="Example: President and Cabinet" />
+      <input id="memberInput" type="text" placeholder="Add a member" />
       <button class="btn" id="addMember">Add member</button>
       <div class="chips" id="memberList"></div>
 
@@ -211,8 +211,31 @@
       </select>
 
       <button class="btn" id="submitGame">Check my answer</button>
+      <button class="btn" id="continueToQuestions" style="display:none;">Continue to questions</button>
       <div id="gameFeedback" class="feedback"></div>
       <div id="summary" class="summary"></div>
+    </section>
+
+    <section id="stage4" class="panel stage" aria-live="polite">
+      <h2>Answer Questions About Your Government</h2>
+      <p>Now apply constitutional principles to these scenarios.</p>
+
+      <div class="panel">
+        <h3>Question 1</h3>
+        <p>The executive has issued an order to the police to arrest anyone with black hair and anyone who holds protests for equality. The parliament passes legislation making black hair illegal, limits people with black hair from walking in public areas, and prohibits the courts from challenging this law.</p>
+        <label class="label" for="q1">What kind of law-making authority is this?</label>
+        <input id="q1" type="text" placeholder="Type your answer" />
+      </div>
+
+      <div class="panel">
+        <h3>Question 2</h3>
+        <p>The parliament passes legislation giving effect to the right to housing and selects specific land for the executive to build houses for unhoused people. The executive uses the land to build a holiday resort. The legislature launches an action against the executive in the Constitutional Court.</p>
+        <label class="label" for="q2">Describe the key elements of our constitution in this scenario.</label>
+        <input id="q2" type="text" placeholder="Type your answer" />
+      </div>
+
+      <button class="btn" id="submitQuestions">Submit answers</button>
+      <div id="questionsFeedback" class="feedback"></div>
     </section>
   </main>
 
@@ -228,14 +251,15 @@
     const constitutionCorrect = new Set(['Supreme law', 'Founding document']);
 
     const expectedChecks = {
-      Executive: 'Legislature',
+      Executive: 'Judiciary',
       Legislature: 'Executive',
-      Judiciary: 'Executive'
+      Judiciary: 'Legislature'
     };
 
     const stage1 = document.getElementById('stage1');
     const stage2 = document.getElementById('stage2');
     const stage3 = document.getElementById('stage3');
+    const stage4 = document.getElementById('stage4');
 
     const constitutionOptions = document.getElementById('constitutionOptions');
     const constitutionFeedback = document.getElementById('constitutionFeedback');
@@ -253,13 +277,17 @@
     const functionList = document.getElementById('functionList');
     const memberList = document.getElementById('memberList');
     const gameFeedback = document.getElementById('gameFeedback');
+    const continueToQuestions = document.getElementById('continueToQuestions');
     const summaryEl = document.getElementById('summary');
+    const q1Input = document.getElementById('q1');
+    const q2Input = document.getElementById('q2');
+    const questionsFeedback = document.getElementById('questionsFeedback');
 
     const functions = [];
     const members = [];
 
     function showStage(stage) {
-      [stage1, stage2, stage3].forEach(s => s.classList.remove('active'));
+      [stage1, stage2, stage3, stage4].forEach(s => s.classList.remove('active'));
       stage.classList.add('active');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -325,6 +353,25 @@
       collection.push(value);
       input.value = '';
       renderChips(view, collection);
+    }
+
+    function appendSummaryLine(container, label, value) {
+      const row = document.createElement('div');
+      row.textContent = `${label}: ${value}`;
+      container.appendChild(row);
+    }
+
+    function renderSummaryCard(branch, functionsList, membersList, accountable) {
+      summaryEl.replaceChildren();
+
+      const title = document.createElement('strong');
+      title.textContent = 'Your Government Card:';
+      summaryEl.appendChild(title);
+
+      appendSummaryLine(summaryEl, 'Branch', branch);
+      appendSummaryLine(summaryEl, 'Functions', functionsList.join('; '));
+      appendSummaryLine(summaryEl, 'Members', membersList.join('; '));
+      appendSummaryLine(summaryEl, 'Holds accountable', accountable);
     }
 
     renderConstitutionChoices();
@@ -398,17 +445,33 @@
 
       gameFeedback.className = accurate ? 'feedback ok' : 'feedback warn';
       gameFeedback.textContent = accurate
-        ? 'Great work! Your accountability link is correct.'
+        ? 'Great work! Your accountability link is correct. Continue to answer questions about your government.'
         : `Nice try! For ${branch}, a better answer is ${expected}.`;
 
       summaryEl.style.display = 'block';
-      summaryEl.innerHTML = `
-        <strong>Your Government Card:</strong><br>
-        Branch: ${branch}<br>
-        Functions: ${functions.join('; ')}<br>
-        Members: ${members.join('; ')}<br>
-        Holds accountable: ${accountable}
-      `;
+      renderSummaryCard(branch, functions, members, accountable);
+
+      if (accurate) {
+        continueToQuestions.style.display = 'block';
+      } else {
+        continueToQuestions.style.display = 'none';
+      }
+    });
+
+    continueToQuestions.addEventListener('click', () => showStage(stage4));
+
+    document.getElementById('submitQuestions').addEventListener('click', () => {
+      const q1 = q1Input.value.trim();
+      const q2 = q2Input.value.trim();
+
+      if (!q1 || !q2) {
+        questionsFeedback.className = 'feedback warn';
+        questionsFeedback.textContent = 'Please answer both questions before submitting.';
+        return;
+      }
+
+      questionsFeedback.className = 'feedback ok';
+      questionsFeedback.textContent = 'Great effort. You have completed the government questions.';
     });
   </script>
 </body>
