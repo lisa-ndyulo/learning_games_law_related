@@ -22,3 +22,4 @@ Then open:
 3. Save, wait for deployment, and open the published URL.
 
 Because this project uses a root `index.html`, it is GitHub Pages friendly with no build step.
+
