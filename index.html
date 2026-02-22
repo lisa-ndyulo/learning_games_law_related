@@ -270,21 +270,21 @@
         if (!t) { fb.className = 'feedback bad'; fb.textContent = 'Please enter an answer.'; return; }
         if (sentenceCount > 5) { fb.className = 'feedback bad'; fb.textContent = 'Please keep your answer to 5 sentences or fewer.'; return; }
 
-        const groups = [
-          ['establishes organs of state', 'rules establishing organs', 'confers powers', 'defines duties', 'functions of government'],
-          ['protects human rights', 'bill of rights', 'advancement of rights'],
-          ['guiding principles for legislature executive and judiciary', 'guides legislature executive judiciary'],
-          ['separation of powers', 'transformation', 'ubuntu'],
-          ['limits power', 'constrains state power', 'limits state power']
+        const keywordList = [
+          'seperation of powers', 'transformation', 'ubuntu', 'values', 'limits', 'state power',
+          'government power', 'constrains', 'confers', 'gives', 'duties', 'defines', 'sets',
+          'functions', 'government', 'organs', 'branches', 'spheres', 'responsibilities',
+          'advance', 'advancement', 'human dignity', 'equality', 'guides', 'principles',
+          'legislature', 'judiciary', 'executive', 'rights'
         ];
-        const hits = hitCount(t, groups);
-        if (hits >= 2) {
+        const hits = keywordList.filter((word) => containsAny(t, [word])).length;
+        if (hits >= 1) {
           fb.className = 'feedback good';
-          fb.innerHTML = `Excellent (${hits}/5 concepts). <button id="next">Continue</button>`;
+          fb.innerHTML = `Excellent (${hits} keyword match${hits === 1 ? '' : 'es'}). <button id="next">Continue</button>`;
           document.getElementById('next').onclick = () => setStage(2);
         } else {
           fb.className = 'feedback bad';
-          fb.textContent = 'Good try. Add more key ideas about powers, rights, values, and limits on power.';
+          fb.textContent = 'Good try. Include at least one key constitutional term.';
         }
       };
     },
