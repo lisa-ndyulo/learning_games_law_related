@@ -374,15 +374,13 @@
       `;
       document.getElementById('check').onclick = () => {
         const t = document.getElementById('ans').value;
-        const groups = [
-          ['constitutional supremacy', 'benchmark for legality', 'yard stick', 'constitution is supreme'],
-          ['law or conduct inconsistent with constitution is invalid', 'declared unlawful and invalid'],
-          ['state must act in accordance with constitution'],
-          ['parliamentary sovereignty', 'legislature has ultimate law making authority'],
-          ['legislature can make and repeal any law'],
-          ['courts cannot test legality', 'courts cannot invalidate law', 'courts only apply law']
+        const keywordList = [
+          'legal', 'authority', 'highest', 'law', 'system', 'supreme', 'supreme law', 'conduct',
+          'valid', 'unlawful', 'declare', 'courts', 'court', 'legislature', 'parliament', 'repeal',
+          'make', 'invalidate', 'consistent', 'inconsistent', 'test', 'cannot', 'can', 'must',
+          'act', 'accordance', 'constitution', 'section 2'
         ];
-        const hits = hitCount(t, groups);
+        const hits = keywordList.filter((word) => containsAny(t, [word])).length;
         const fb = document.getElementById('fb');
         if (hits >= 4) {
           fb.className = 'feedback good';
