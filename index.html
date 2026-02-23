@@ -495,6 +495,12 @@
 
         const correctMap = { Legislature: 'Makes laws', Executive: 'Enforces law', Judiciary: 'Interprets the law' };
         const functionCorrect = correctMap[b] === f;
+        const accountabilityWords = [
+          'hold', 'accountable', 'separation of powers', 'checks and balances', 'interference',
+          'interfering', 'usurping', 'power', 'exceeding', 'roles', 'functions', 'duties', 'prevents'
+        ];
+        const accountabilityHits = accountabilityWords.filter((word) => containsAny(acc, [word])).length;
+        const accountabilityOk = accountabilityHits >= 4;
         const accountabilityOk = containsAny(acc, [
           'checks and balances',
           'separation of powers',
@@ -529,6 +535,26 @@
       `;
       document.getElementById('check').onclick = () => {
         const t = document.getElementById('ans').value;
+        const caseTerms = ['premier of wc v president', 'city of joburg v gauteng', 'iec v langeberg municipality', 'de lange v smuts'];
+        const coreTerms = [
+          'national', 'provincial', 'local', 'sphere', 'three', 'interrelated', 'independent', 'distinctive',
+          'autonomous', 'powers', 'responsibilities', 'exclusive', 'exercise', 'cooperative', 'co-operative',
+          'government', 'constitutional', 'duties', 'together', 'separation of powers'
+        ];
+        const caseHits = caseTerms.filter((word) => containsAny(t, [word])).length;
+        const termHits = coreTerms.filter((word) => containsAny(t, [word])).length;
+        const fb = document.getElementById('fb');
+        if (caseHits >= 1 && termHits >= 10) {
+          fb.className = 'feedback good';
+          completeCurrentStage();
+          fb.innerHTML = 'Strong explanation of cooperative governance. Use Next to continue.';
+        } else if (caseHits >= 1 && termHits >= 5) {
+          fb.className = 'feedback good';
+          completeCurrentStage();
+          fb.innerHTML = `${randomPraise()} You captured key cooperative-governance ideas. Use Next to continue.`;
+        } else {
+          fb.className = 'feedback bad';
+          fb.textContent = 'Add more on cases, spheres, autonomy, and cooperative constitutional duties.';
         const groups = [
           ['premier of wc v president', 'city of joburg v gauteng', 'iec v langeberg municipality', 'de lange v smuts'],
           ['national provincial and local spheres', 'three spheres'],
@@ -631,6 +657,11 @@
     function finalQuestion() {
       stageEl.innerHTML = `
         <h2>You have a government, Congratulations. Now show off how well you know your law</h2>
+        <p class="muted">Optional stage</p>
+        <p>Read <em>Mwelase v Director General for the Department of Rural Development [2019] ZACC 30</em>. Summarise the issue and explain the purpose of separation of powers and how it constrains judicial powers.</p>
+        <textarea id="ans"></textarea>
+        <button id="check">Submit final answer</button>
+        <button id="skip">Skip this optional stage</button>
         <p>Read <em>Mwelase v Director General for the Department of Rural Development [2019] ZACC 30</em>. Summarise the issue and explain the purpose of separation of powers and how it constrains judicial powers.</p>
         <textarea id="ans"></textarea>
         <button id="check">Submit final answer</button>
@@ -639,6 +670,14 @@
       document.getElementById('check').onclick = () => {
         const t = document.getElementById('ans').value;
         const groups = [
+          ['separation of powers', 'prevents concentration of power'],
+          ['institutional', 'competence', 'democratic', 'accountability'],
+          ['not rigid', 'deference', 'constitutional rights', 'are at stake', 'human rights'],
+          ['courts', 'cannot', 'usurp', 'executive', 'functions', 'exceed', 'power'],
+          ['intruding', 'policy', 'implementation', 'remedial', 'action'],
+          ['persistent', 'systematic', 'failure', 'ineffective', 'court order'],
+          ['structural relief', 'tailored', 'vindicate', 'vindication', 'rights'],
+          ['assuming', 'without', 'core', 'executive functions']
           ['mwelase', 'special master', 'land restitution claims'],
           ['separation of powers prevents concentration of power', 'institutional competence', 'democratic accountability'],
           ['not rigid deference', 'constitutional rights are at stake'],
@@ -657,12 +696,19 @@
           fb.textContent = 'Solid start. Include more on special master, systemic failure, and tailored judicial remedies.';
         }
       };
+      document.getElementById('skip').onclick = () => {
+        const fb = document.getElementById('fb');
+        completeCurrentStage();
+        fb.className = 'feedback good';
+        fb.innerHTML = `${randomPraise()} Optional stage skipped. Use Next to celebrate.`;
+      };
     },
 
     function celebration() {
       stageEl.innerHTML = `
         <h2>🎉 You did it! Your constitutional government stands.</h2>
         <p>You completed all stages. Keep building your constitutional law mastery!</p>
+        <p class="muted">Next time, we can see if you are a fit and proper human rights lawyer.</p>
         <button id="again">Play again</button>
       `;
       celebrationFx();
