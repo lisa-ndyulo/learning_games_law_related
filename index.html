@@ -501,6 +501,12 @@
         ];
         const accountabilityHits = accountabilityWords.filter((word) => containsAny(acc, [word])).length;
         const accountabilityOk = accountabilityHits >= 4;
+        const accountabilityOk = containsAny(acc, [
+          'checks and balances',
+          'separation of powers',
+          'hold each other accountable',
+          'prevents usurping power'
+        ]);
         const caseLawOk = containsAny(acc, [
           'first certification judgment',
           'ex parte chairperson of the constitutional assembly in re certification of the constitution of the republic of south africa',
@@ -549,6 +555,23 @@
         } else {
           fb.className = 'feedback bad';
           fb.textContent = 'Add more on cases, spheres, autonomy, and cooperative constitutional duties.';
+        const groups = [
+          ['premier of wc v president', 'city of joburg v gauteng', 'iec v langeberg municipality', 'de lange v smuts'],
+          ['national provincial and local spheres', 'three spheres'],
+          ['distinctive interrelated and interdependent', 'interrelated and interdependent'],
+          ['autonomous powers and responsibilities', 'defined space', 'exclusive exercise of power'],
+          ['all three spheres must work together', 'cooperative governance', 'fulfil constitutional duties'],
+          ['legislature executive judiciary', 'separation of powers']
+        ];
+        const hits = hitCount(t, groups);
+        const fb = document.getElementById('fb');
+        if (hits >= 3) {
+          fb.className = 'feedback good';
+          completeCurrentStage();
+          fb.innerHTML = `${randomPraise()} Strong explanation of cooperative governance. Use Next to continue.`;
+        } else {
+          fb.className = 'feedback bad';
+          fb.textContent = 'Add more on cases, three spheres, and how powers are divided but cooperative.';
         }
       };
     },
@@ -639,6 +662,9 @@
         <textarea id="ans"></textarea>
         <button id="check">Submit final answer</button>
         <button id="skip">Skip this optional stage</button>
+        <p>Read <em>Mwelase v Director General for the Department of Rural Development [2019] ZACC 30</em>. Summarise the issue and explain the purpose of separation of powers and how it constrains judicial powers.</p>
+        <textarea id="ans"></textarea>
+        <button id="check">Submit final answer</button>
         <div class="feedback" id="fb"></div>
       `;
       document.getElementById('check').onclick = () => {
@@ -652,6 +678,12 @@
           ['persistent', 'systematic', 'failure', 'ineffective', 'court order'],
           ['structural relief', 'tailored', 'vindicate', 'vindication', 'rights'],
           ['assuming', 'without', 'core', 'executive functions']
+          ['mwelase', 'special master', 'land restitution claims'],
+          ['separation of powers prevents concentration of power', 'institutional competence', 'democratic accountability'],
+          ['not rigid deference', 'constitutional rights are at stake'],
+          ['courts cannot usurp executive functions', 'intruding unnecessarily into policy implementation'],
+          ['robust remedial action', 'persistent systemic failure', 'ineffectiveness of prior court orders'],
+          ['tailored structural relief', 'vindication of rights', 'without assuming executive core functions']
         ];
         const hits = hitCount(t, groups);
         const fb = document.getElementById('fb');
