@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Constitute a State</title>
+  <style>
+    :root {
+      --card: #ffffff;
+      --text: #152238;
+      --muted: #5a667a;
+      --primary: #2f5bea;
+      --good: #0f9d58;
+      --warn: #d93025;
+      --border: #dce4ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background-color: #f4f1ea;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #app, .app, #root, .game-container {
+      background: transparent;
+    }
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      box-shadow: 0 6px 20px rgba(47, 91, 234, 0.35);
+    }
+    header h1 {
+      margin: 0;
+      font-size: clamp(1.3rem, 4vw, 1.8rem);
+      letter-spacing: 0.4px;
+    }
+    main {
+      width: min(920px, 94vw);
+      margin: 1rem auto 2rem;
+      flex: 1;
+      display: grid;
+      gap: 0.8rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem;
+      box-shadow: 0 8px 30px rgba(33, 53, 101, 0.08);
+      position: relative;
+      z-index: 2;
+    }
+    h2, h3 { margin-top: 0; }
+    h2 { font-size: clamp(1.1rem, 3.4vw, 1.35rem); }
+    p { line-height: 1.45; margin: 0.45rem 0; }
+    .muted { color: var(--muted); font-size: 0.95rem; }
+    .option-grid { display: grid; gap: 0.55rem; margin-top: 0.7rem; }
+    .option {
+      border: 1px solid #d7ddf4;
+      border-radius: 10px;
+      padding: 0.65rem;
+      background: #fafcff;
+      display: block;
+    }
+    label { cursor: pointer; }
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      border: 1px solid #c9d4ff;
+      border-radius: 10px;
+      padding: 0.7rem;
+      font: inherit;
+      resize: vertical;
+      margin-top: 0.6rem;
+    }
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 0.65rem 0.95rem;
+      margin-top: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .feedback { margin-top: 0.7rem; font-weight: 600; }
+    .good { color: var(--good); }
+    .bad { color: var(--warn); }
+    .progress { font-size: 0.68rem; color: #30415f; padding: 0.35rem 0.55rem; }
+    .banner {
+      background-color: #efe8da;
+    }
+    .nav-controls {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.6rem;
+      padding: 0.55rem;
+    }
+    .nav-controls button {
+      margin-top: 0;
+      flex: 1;
+    }
+    .nav-controls button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .row { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+    .pill {
+      display: inline-block;
+      background: #edf2ff;
+      color: #243b8f;
+      border: 1px solid #d2ddff;
+      border-radius: 999px;
+      padding: 0.2rem 0.55rem;
+      font-size: 0.8rem;
+    }
+    #fxLayer {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 16px;
+      opacity: 0.95;
+      animation: fall linear forwards;
+    }
+    .firework {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      box-shadow: 0 0 10px currentColor;
+      animation: pop 900ms ease-out forwards;
+    }
+    @keyframes fall {
+      to { transform: translateY(110vh) rotate(540deg); opacity: 0.8; }
+    }
+    @keyframes pop {
+      0% { transform: scale(0.5); opacity: 1; }
+      100% { transform: scale(8); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Constitute a State</h1>
+</header>
+<main class="game-container">
+  <div class="card progress banner" id="progress">🇿🇦 Stage tracker</div>
+  <section class="card" id="stage"></section>
+  <div class="card nav-controls">
+    <button id="backBtn">⬅ Back</button>
+    <button id="nextBtn" disabled>Next ➜</button>
+  </div>
+</main>
+<div id="fxLayer" aria-hidden="true"></div>
+
+<script>
+  const stageEl = document.getElementById('stage');
+  const progressEl = document.getElementById('progress');
+  const fxLayer = document.getElementById('fxLayer');
+  const backBtn = document.getElementById('backBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  let currentStage = 0;
+  const completedStages = new Set();
+  const unlockedStages = new Set([0]);
+
+  const praises = [
+    'Excellent work!',
+    'Brilliant answer!',
+    'Great progress!',
+    'Superb reasoning!',
+    'Well done!',
+    'Outstanding effort!'
+  ];
+  const randomPraise = () => praises[Math.floor(Math.random() * praises.length)];
+
+  const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+  const normalize = (s) => (s || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+
+  const containsAny = (text, phrases) => {
+    const n = normalize(text);
+    return phrases.some(p => n.includes(normalize(p)));
+  };
+
+  const hitCount = (text, phraseGroups) => {
+    const n = normalize(text);
+    let hits = 0;
+    for (const group of phraseGroups) {
+      if (group.some(p => n.includes(normalize(p)))) hits++;
+    }
+    return hits;
+  };
+
+  const celebrationFx = () => {
+    fxLayer.innerHTML = '';
+    const colors = ['#ff4d6d', '#ffd166', '#06d6a0', '#118ab2', '#8338ec'];
+    for (let i = 0; i < 100; i++) {
+      const c = document.createElement('span');
+      c.className = 'confetti';
+      c.style.left = `${Math.random() * 100}vw`;
+      c.style.top = `${-20 - Math.random() * 80}px`;
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      c.style.animationDuration = `${2.8 + Math.random() * 2.8}s`;
+      c.style.animationDelay = `${Math.random() * 0.8}s`;
+      fxLayer.appendChild(c);
+    }
+    for (let i = 0; i < 36; i++) {
+      const f = document.createElement('span');
+      f.className = 'firework';
+      f.style.left = `${10 + Math.random() * 80}vw`;
+      f.style.top = `${10 + Math.random() * 45}vh`;
+      f.style.color = colors[Math.floor(Math.random() * colors.length)];
+      f.style.animationDelay = `${Math.random() * 1.1}s`;
+      fxLayer.appendChild(f);
+    }
+  };
+
+  const clearFx = () => { fxLayer.innerHTML = ''; };
+
+  function updateNav() {
+    backBtn.disabled = currentStage === 0;
+    nextBtn.disabled = !completedStages.has(currentStage) || currentStage >= stages.length - 1;
+  }
+
+  function completeCurrentStage() {
+    completedStages.add(currentStage);
+    unlockedStages.add(currentStage + 1);
+    updateNav();
+  }
+
+  function setStage(i) {
+    if (i < 0 || i >= stages.length) return;
+    if (!unlockedStages.has(i) && i > currentStage) return;
+    currentStage = i;
+    clearFx();
+    progressEl.textContent = `Stage ${i + 1} of ${stages.length}`;
+    stages[i]();
+    updateNav();
+  }
+
+  const constitutionOptions = shuffle([
+    { text: 'Founding document', correct: true },
+    { text: 'Objective normative value system', correct: true },
+    { text: "Contains rules and functions on the state's existence", correct: true },
+    { text: 'A list of only criminal offences', correct: false },
+    { text: 'Only applies during elections', correct: false },
+    { text: 'Optional values with no legal force', correct: false }
+  ]);
+
+  const tfStatements = [
+    {
+      text: 'The key principles of the Constitution are found in section 2 of the Constitution.',
+      correct: 'false',
+      wrongPrompt: 'Err, consult Constitution section 2.',
+      rightPrompt: 'Great! You can continue to build a state.'
+    },
+    {
+      text: 'South Africa uses constitutional supremacy as its legal system set out in section 2 of the Constitution.',
+      correct: 'true',
+      wrongPrompt: 'Not quite. Revisit section 2 and constitutional supremacy.',
+      rightPrompt: 'Correct. Move to the next statement.'
+    },
+    {
+      text: 'The Constitution is the ultimate authority for legality in a parliamentary sovereignty system where courts can invalidate law.',
+      correct: 'false',
+      wrongPrompt: 'Almost. That statement mixes two different constitutional systems.',
+      rightPrompt: 'Correct. Continue.'
+    }
+  ];
+
+  const stages = [
+    function landing() {
+      stageEl.innerHTML = `
+        <h2>What is a constitution?</h2>
+        <p>Select all correct options.</p>
+        <div class="option-grid" id="c-options"></div>
+        <button id="check">Check answer</button>
+        <div class="feedback" id="fb"></div>
+      `;
+      const wrap = document.getElementById('c-options');
+      constitutionOptions.forEach((opt, idx) => {
+        wrap.insertAdjacentHTML('beforeend', `<label class="option"><input type="checkbox" data-correct="${opt.correct}" id="o${idx}"> ${opt.text}</label>`);
+      });
+      document.getElementById('check').onclick = () => {
+        const boxes = [...wrap.querySelectorAll('input[type="checkbox"]')];
+        const ok = boxes.every((b) => b.checked === (b.dataset.correct === 'true'));
+        const fb = document.getElementById('fb');
+        if (ok) {
+          fb.className = 'feedback good';
+          completeCurrentStage();
+          fb.innerHTML = `${randomPraise()} Great now you can start a government. Use Next to continue.`;
+        } else {
+          fb.className = 'feedback bad';
+          fb.textContent = 'Not yet. Pick all and only the correct descriptions.';
+        }
+      };
+    },
+
+    function constitutionFunction() {
+      stageEl.innerHTML = `
+        <h2>Wait, what does the South African Constitution do?</h2>
+        <p class="muted">Type your answer (maximum 5 sentences).</p>
+        <textarea id="ans"></textarea>
+        <button id="check">Submit</button>
+        <div class="feedback" id="fb"></div>
+      `;
+      document.getElementById('check').onclick = () => {
+        const t = document.getElementById('ans').value.trim();
+        const sentenceCount = t.split(/[.!?]+/).filter(Boolean).length;
+        const fb = document.getElementById('fb');
+        if (!t) { fb.className = 'feedback bad'; fb.textContent = 'Please enter an answer.'; return; }
+        if (sentenceCount > 5) { fb.className = 'feedback bad'; fb.textContent = 'Please keep your answer to 5 sentences or fewer.'; return; }
+
+        const keywordList = [
+          'seperation of powers', 'transformation', 'ubuntu', 'values', 'limits', 'state power',
+          'government power', 'constrains', 'confers', 'gives', 'duties', 'defines', 'sets',
+          'functions', 'government', 'organs', 'branches', 'spheres', 'responsibilities',
+          'advance', 'advancement', 'human dignity', 'equality', 'guides', 'principles',
+          'legislature', 'judiciary', 'executive', 'rights'
+        ];
+        const hits = keywordList.filter((word) => containsAny(t, [word])).length;
+        if (hits >= 1) {
+          fb.className = 'feedback good';
+          completeCurrentStage();
+          fb.innerHTML = `${randomPraise()} Excellent (${hits} keyword match${hits === 1 ? '' : 'es'}). Use Next to continue.`;
+        } else {
+          fb.className = 'feedback bad';
+          fb.textContent = 'Good try. Include at least one key constitutional term.';
+        }
+      };
+    },
+
+    function tfPage() {
+      let idx = 0;
+      const render = () => {
+        const s = tfStatements[idx];
+        stageEl.innerHTML = `
+          <h2>Constitutional values, lets play true or false</h2>
+          <p><span class="pill">Statement ${idx + 1}</span> ${s.text}</p>
+          <div class="row">
+            <label class="option"><input type="radio" name="tf" value="true"> True</label>
+            <label class="option"><input type="radio" name="tf" value="false"> False</label>
+          </div>
+          <button id="check">Check</button>
+          <div class="feedback" id="fb"></div>
+        `;
+        document.getElementById('check').onclick = () => {
+          const picked = document.querySelector('input[name="tf"]:checked');
+          const fb = document.getElementById('fb');
+          if (!picked) { fb.className = 'feedback bad'; fb.textContent = 'Pick true or false first.'; return; }
+          if (picked.value === s.correct) {
+            if (idx < tfStatements.length - 1) {
+              fb.className = 'feedback good';
+              fb.innerHTML = `${randomPraise()} ${s.rightPrompt}`;
+              idx++;
+              render();
+            } else {
+              fb.className = 'feedback good';
+              completeCurrentStage();
+              fb.innerHTML = `${randomPraise()} ${s.rightPrompt} Use Next to continue.`;
+            }
+          } else {
+            fb.className = 'feedback bad';
+            fb.textContent = s.wrongPrompt;
+          }
+        };
+      };
+      render();
+    },
+
+    function weThePeople() {
+      stageEl.innerHTML = `
+        <h2>We the people of South Africa</h2>
+        <p>The preamble captures the forward-looking transformative approach of South Africa's democracy. What is transformative constitutionalism and how does it reflect this ideal?</p>
+        <textarea id="ans"></textarea>
+        <button id="check">Submit</button>
+        <div class="feedback" id="fb"></div>
+      `;
+      document.getElementById('check').onclick = () => {
+        const t = document.getElementById('ans').value;
+        const groups = [
+          ['human dignity', 'dignity'],
+          ['equality'],
+          ['advancement of human rights and freedoms', 'human rights and freedoms'],
+          ['supremacy of the constitution'],
+          ['rule of law'],
+          ['universal suffrage', 'regular elections', 'common voters roll', 'multi party systems', 'democratic government', 'accountability responsiveness and openness'],
+          ['transformative constitutionalism', 'transforms society through law'],
+          ['from a society deeply divided', 'legacy of racism', 'racist', 'inequality', 'oppression', 'past'],
+          ['social justice', 'freedom', 'democracy']
+        ];
+        const hits = hitCount(t, groups);
+        const fb = document.getElementById('fb');
+        if (hits === 0) {
+          fb.className = 'feedback bad';
+          fb.textContent = 'Try again, you can do better.';
+          return;
+        }
+        if (hits >= 4) {
+          fb.className = 'feedback good';
+          completeCurrentStage();
+          fb.innerHTML = `${randomPraise()} Wow, you could be the president, continue. Use Next to continue.`;
+        } else {
+          fb.className = 'feedback bad';
+          fb.textContent = `You included some ideas (${hits}/9), but add more constitutional values and transformative elements.`;
+        }
+      };
+    },
+
+    function sovereigntyExplain() {
+      stageEl.innerHTML = `
+        <h2>Explain the difference between parliamentary sovereignty and constitutional supremacy</h2>
+        <textarea id="ans"></textarea>
+        <button id="check">Submit</button>
+        <div class="feedback" id="fb"></div>
+      `;
+      document.getElementById('check').onclick = () => {
+        const t = document.getElementById('ans').value;
+        const keywordList = [
+          'legal', 'authority', 'highest', 'law', 'system', 'supreme', 'supreme law', 'conduct',
+          'valid', 'unlawful', 'declare', 'courts', 'court', 'legislature', 'parliament', 'repeal',
+          'make', 'invalidate', 'consistent', 'inconsistent', 'test', 'cannot', 'can', 'must',
+          'act', 'accordance', 'constitution', 'section 2'
+        ];
+        const hits = keywordList.filter((word) => containsAny(t, [word])).length;
+        const fb = document.getElementById('fb');
+        if (hits >= 4) {
+          fb.className = 'feedback good';
+          completeCurrentStage();
+          fb.innerHTML = `${randomPraise()} Great analysis (${hits}/6). Use Next to continue.`;
+        } else if (hits >= 3) {
+          fb.className = 'feedback bad';
+          fb.textContent = `You scored ${hits}/6. Go brush up on definitions and try again.`;
+        } else {
+          fb.className = 'feedback bad';
+          fb.textContent = `You scored ${hits}/6. Go brush up on definitions and try again.`;
+        }
+      };
+    },
+
+    function govStructure() {
+      const branchChoices = shuffle(['Legislature', 'Executive', 'Judiciary']);
+      const funcBank = {
+        Legislature: shuffle(['Makes laws', 'Appoints judges', 'Runs prosecutions']),
+        Executive: shuffle(['Enforces law', 'Interprets the law', 'Runs independent courts']),
+        Judiciary: shuffle(['Interprets the law', 'Makes laws', 'Runs cabinet meetings'])
+      };
+      stageEl.innerHTML = `
+        <h2>How is your government structured?</h2>
+        <p>Select a branch, then choose its correct function.</p>
+        <div class="row" id="branches"></div>
+        <div id="functions" class="option-grid"></div>
+        <p class="muted">Explain the accountability (use case) system.</p>
+        <textarea id="acc"></textarea>
+        <button id="check">Submit</button>
+        <div class="feedback" id="fb"></div>
+      `;
+      const branchWrap = document.getElementById('branches');
+      branchChoices.forEach((b) => {
+        branchWrap.insertAdjacentHTML('beforeend', `<label class="option"><input type="radio" name="branch" value="${b}"> ${b}</label>`);
+      });
+
+      document.querySelectorAll('input[name="branch"]').forEach((r) => {
+        r.onchange = () => {
+          const b = document.querySelector('input[name="branch"]:checked')?.value;
+          const fWrap = document.getElementById('functions');
+          fWrap.innerHTML = '';
+          funcBank[b].forEach((f) => {
+            fWrap.insertAdjacentHTML('beforeend', `<label class="option"><input type="radio" name="func" value="${f}"> ${f}</label>`);
+          });
+        };
+      });
+
+      document.getElementById('check').onclick = () => {
+        const b = document.querySelector('input[name="branch"]:checked')?.value;
+        const f = document.querySelector('input[name="func"]:checked')?.value;
+        const acc = document.getElementById('acc').value;
+        const fb = document.getElementById('fb');
+        if (!b || !f) { fb.className = 'feedback bad'; fb.textContent = 'Select a branch and function.'; return; }
+
+        const correctMap = { Legislature: 'Makes laws', Executive: 'Enforces law', Judiciary: 'Interprets the law' };
+        const functionCorrect = correctMap[b] === f;
+        const accountabilityOk = containsAny(acc, [
+          'checks and balances',
+          'separation of powers',
+          'hold each other accountable',
+          'prevents usurping power'
+        ]);
+        const caseLawOk = containsAny(acc, [
+          'first certification judgment',
+          'ex parte chairperson of the constitutional assembly in re certification of the constitution of the republic of south africa',
+          'mwelase v director general',
+          'mwelase v director-general for the department of rural development and land reform'
+        ]);
+
+        if (functionCorrect && accountabilityOk && caseLawOk) {
+          fb.className = 'feedback good';
+          completeCurrentStage();
+          fb.innerHTML = `${randomPraise()} Correct structure and accountability reasoning. Use Next to continue.`;
+        } else {
+          fb.className = 'feedback bad';
+          fb.textContent = 'Try again, your answer is missing some important points.';
+        }
+      };
+    },
+
+    function cooperativeGov() {
+      stageEl.innerHTML = `
+        <h2>Your government is cooperative</h2>
+        <p>Using case law explain cooperative governance and give the correct constitutional provisions for this concept.</p>
+        <textarea id="ans"></textarea>
+        <button id="check">Submit</button>
+        <div class="feedback" id="fb"></div>
+      `;
+      document.getElementById('check').onclick = () => {
+        const t = document.getElementById('ans').value;
+        const groups = [
+          ['premier of wc v president', 'city of joburg v gauteng', 'iec v langeberg municipality', 'de lange v smuts'],
+          ['national provincial and local spheres', 'three spheres'],
+          ['distinctive interrelated and interdependent', 'interrelated and interdependent'],
+          ['autonomous powers and responsibilities', 'defined space', 'exclusive exercise of power'],
+          ['all three spheres must work together', 'cooperative governance', 'fulfil constitutional duties'],
+          ['legislature executive judiciary', 'separation of powers']
+        ];
+        const hits = hitCount(t, groups);
+        const fb = document.getElementById('fb');
+        if (hits >= 3) {
+          fb.className = 'feedback good';
+          completeCurrentStage();
+          fb.innerHTML = `${randomPraise()} Strong explanation of cooperative governance. Use Next to continue.`;
+        } else {
+          fb.className = 'feedback bad';
+          fb.textContent = 'Add more on cases, three spheres, and how powers are divided but cooperative.';
+        }
+      };
+    },
+
+    function branchesAndSpheres() {
+      const randomJudicial = shuffle([
+        'Applies nationally',
+        'Only operates in local',
+        'Constitutional Court only operates at national, other courts at provincial and local levels',
+        'Judiciary is abolished in provinces'
+      ]);
+      const randomProvJud = shuffle(['Judicial authority applies nationally', 'Supreme Court of Appeal', 'Magistrates\' Court']);
+      const randomLocalJud = shuffle(['Judiciary operates nationally', 'High Courts only', 'Local councillors act as judges']);
+
+      stageEl.innerHTML = `
+        <h2>Oops, you have not employed personnel or allocated functions for your government</h2>
+        <p>Match each sphere with the correct authority combinations.</p>
+
+        <h3>Level 1: National sphere</h3>
+        <p>Executive authority:</p><div class="option-grid" id="nExec"></div>
+        <p>Legislative authority:</p><div class="option-grid" id="nLeg"></div>
+        <p>Judicial authority:</p><div class="option-grid" id="nJud"></div>
+
+        <h3>Level 2: Provincial sphere</h3>
+        <p>Legislative authority:</p><div class="option-grid" id="pLeg"></div>
+        <p>Executive authority:</p><div class="option-grid" id="pExec"></div>
+        <p>Judicial authority:</p><div class="option-grid" id="pJud"></div>
+
+        <h3>Level 3: Local sphere</h3>
+        <p>Legislative authority:</p><div class="option-grid" id="lLeg"></div>
+        <p>Executive authority:</p><div class="option-grid" id="lExec"></div>
+        <p>Judicial authority:</p><div class="option-grid" id="lJud"></div>
+
+        <button id="check">Check all</button>
+        <div class="feedback" id="fb"></div>
+      `;
+
+      const draw = (id, name, opts) => {
+        const el = document.getElementById(id);
+        opts.forEach((o) => {
+          el.insertAdjacentHTML('beforeend', `<label class="option"><input type="radio" name="${name}" value="${o}"> ${o}</label>`);
+        });
+      };
+
+      draw('nExec', 'nExec', shuffle(['President and Cabinet', 'Premier and Executive Council', 'Municipal Manager']));
+      draw('nLeg', 'nLeg', shuffle(['Parliament: National Assembly and National Council of Provinces', 'Provincial Legislature', 'Municipal Council']));
+      draw('nJud', 'nJud', randomJudicial);
+
+      draw('pLeg', 'pLeg', shuffle(['Provincial Legislatures', 'National Assembly', 'Municipal Council']));
+      draw('pExec', 'pExec', shuffle(['Premier and Executive Councils', 'President and Cabinet', 'Mayoral Committee']));
+      draw('pJud', 'pJud', randomProvJud);
+
+      draw('lLeg', 'lLeg', shuffle(['Municipal Council', 'National Council of Provinces', 'Provincial Legislature']));
+      draw('lExec', 'lExec', shuffle(['Municipal Council, metropolitan or local councils', 'President and Cabinet', 'Premier and MECs']));
+      draw('lJud', 'lJud', randomLocalJud);
+
+      document.getElementById('check').onclick = () => {
+        const selected = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value;
+        const answers = {
+          nExec: 'President and Cabinet',
+          nLeg: 'Parliament: National Assembly and National Council of Provinces',
+          nJud: 'Applies nationally',
+          pLeg: 'Provincial Legislatures',
+          pExec: 'Premier and Executive Councils',
+          pJud: 'Judicial authority applies nationally',
+          lLeg: 'Municipal Council',
+          lExec: 'Municipal Council, metropolitan or local councils',
+          lJud: 'Judiciary operates nationally'
+        };
+        const ok = Object.keys(answers).every((k) => selected(k) === answers[k]);
+        const fb = document.getElementById('fb');
+        if (ok) {
+          fb.className = 'feedback good';
+          completeCurrentStage();
+          fb.innerHTML = `${randomPraise()} Excellent allocations. Use Next to continue.`;
+        } else {
+          fb.className = 'feedback bad';
+          fb.textContent = 'Some pairings are incorrect. Re-check each sphere carefully.';
+        }
+      };
+    },
+
+    function finalQuestion() {
+      stageEl.innerHTML = `
+        <h2>You have a government, Congratulations. Now show off how well you know your law</h2>
+        <p>Read <em>Mwelase v Director General for the Department of Rural Development [2019] ZACC 30</em>. Summarise the issue and explain the purpose of separation of powers and how it constrains judicial powers.</p>
+        <textarea id="ans"></textarea>
+        <button id="check">Submit final answer</button>
+        <div class="feedback" id="fb"></div>
+      `;
+      document.getElementById('check').onclick = () => {
+        const t = document.getElementById('ans').value;
+        const groups = [
+          ['mwelase', 'special master', 'land restitution claims'],
+          ['separation of powers prevents concentration of power', 'institutional competence', 'democratic accountability'],
+          ['not rigid deference', 'constitutional rights are at stake'],
+          ['courts cannot usurp executive functions', 'intruding unnecessarily into policy implementation'],
+          ['robust remedial action', 'persistent systemic failure', 'ineffectiveness of prior court orders'],
+          ['tailored structural relief', 'vindication of rights', 'without assuming executive core functions']
+        ];
+        const hits = hitCount(t, groups);
+        const fb = document.getElementById('fb');
+        if (hits >= 4) {
+          fb.className = 'feedback good';
+          completeCurrentStage();
+          fb.innerHTML = `${randomPraise()} Outstanding. You built a constitutional government and defended it with case law! Use Next to celebrate.`;
+        } else {
+          fb.className = 'feedback bad';
+          fb.textContent = 'Solid start. Include more on special master, systemic failure, and tailored judicial remedies.';
+        }
+      };
+    },
+
+    function celebration() {
+      stageEl.innerHTML = `
+        <h2>🎉 You did it! Your constitutional government stands.</h2>
+        <p>You completed all stages. Keep building your constitutional law mastery!</p>
+        <button id="again">Play again</button>
+      `;
+      celebrationFx();
+      completeCurrentStage();
+      document.getElementById('again').onclick = () => {
+        completedStages.clear();
+        unlockedStages.clear();
+        unlockedStages.add(0);
+        setStage(0);
+      };
+    }
+  ];
+
+  backBtn.onclick = () => setStage(currentStage - 1);
+  nextBtn.onclick = () => {
+    if (completedStages.has(currentStage)) setStage(currentStage + 1);
+  };
+
+  setStage(0);
+</script>
+</body>
+</html>
