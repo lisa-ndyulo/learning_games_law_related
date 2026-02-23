@@ -18,6 +18,9 @@
     body {
       margin: 0;
       font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background-image: url("/images/sa-constitution-pattern.png");
+      background-repeat: repeat;
+      background-color: #f5f2ea;
       background-color: #f4f1ea;
       color: var(--text);
       min-height: 100vh;
@@ -95,6 +98,7 @@
     .feedback { margin-top: 0.7rem; font-weight: 600; }
     .good { color: var(--good); }
     .bad { color: var(--warn); }
+    .progress { font-size: 0.78rem; color: #30415f; padding: 0.55rem 0.75rem; }
     .progress { font-size: 0.68rem; color: #30415f; padding: 0.35rem 0.55rem; }
     .banner {
       background-color: #efe8da;
@@ -159,6 +163,8 @@
   <h1>Constitute a State</h1>
 </header>
 <main class="game-container">
+  <div class="card progress" id="progress">🇿🇦 Stage tracker</div>
+  <section class="card" id="stage"></section>
   <div class="card progress banner" id="progress">🇿🇦 Stage tracker</div>
   <section class="card" id="stage"></section>
   <div class="card nav-controls">
@@ -206,6 +212,22 @@
     return hits;
   };
 
+  const conceptHitCount = (text, conceptGroups) => {
+    const tokens = normalize(text).split(' ').filter(Boolean);
+    let hits = 0;
+
+    for (const group of conceptGroups) {
+      const matched = group.some((concept) => {
+        if (containsAny(text, concept.phrases || [])) return true;
+        if (!concept.keywords || concept.keywords.length === 0) return false;
+        return concept.keywords.every((keyword) => tokens.includes(normalize(keyword)));
+      });
+      if (matched) hits++;
+    }
+
+    return hits;
+  };
+
   const celebrationFx = () => {
     fxLayer.innerHTML = '';
     const colors = ['#ff4d6d', '#ffd166', '#06d6a0', '#118ab2', '#8338ec'];
@@ -232,6 +254,10 @@
 
   const clearFx = () => { fxLayer.innerHTML = ''; };
 
+  function setStage(i) {
+    clearFx();
+    progressEl.textContent = `Stage ${i + 1} of ${stages.length}`;
+    stages[i]();
   function updateNav() {
     backBtn.disabled = currentStage === 0;
     nextBtn.disabled = !completedStages.has(currentStage) || currentStage >= stages.length - 1;
@@ -302,6 +328,8 @@
         const fb = document.getElementById('fb');
         if (ok) {
           fb.className = 'feedback good';
+          fb.innerHTML = 'Great now you can start a government. <button id="next">Next stage</button>';
+          document.getElementById('next').onclick = () => setStage(1);
           completeCurrentStage();
           fb.innerHTML = `${randomPraise()} Great now you can start a government. Use Next to continue.`;
         } else {
@@ -336,6 +364,8 @@
         const hits = keywordList.filter((word) => containsAny(t, [word])).length;
         if (hits >= 1) {
           fb.className = 'feedback good';
+          fb.innerHTML = `Excellent (${hits} keyword match${hits === 1 ? '' : 'es'}). <button id="next">Continue</button>`;
+          document.getElementById('next').onclick = () => setStage(2);
           completeCurrentStage();
           fb.innerHTML = `${randomPraise()} Excellent (${hits} keyword match${hits === 1 ? '' : 'es'}). Use Next to continue.`;
         } else {
@@ -366,6 +396,12 @@
           if (picked.value === s.correct) {
             if (idx < tfStatements.length - 1) {
               fb.className = 'feedback good';
+              fb.innerHTML = `${s.rightPrompt} <button id="next">Next statement</button>`;
+              document.getElementById('next').onclick = () => { idx++; render(); };
+            } else {
+              fb.className = 'feedback good';
+              fb.innerHTML = `${s.rightPrompt} <button id="next">Continue</button>`;
+              document.getElementById('next').onclick = () => setStage(3);
               fb.innerHTML = `${randomPraise()} ${s.rightPrompt}`;
               idx++;
               render();
@@ -413,6 +449,8 @@
         }
         if (hits >= 4) {
           fb.className = 'feedback good';
+          fb.innerHTML = `Wow, you could be the president, continue. <button id="next">Next question</button>`;
+          document.getElementById('next').onclick = () => setStage(4);
           completeCurrentStage();
           fb.innerHTML = `${randomPraise()} Wow, you could be the president, continue. Use Next to continue.`;
         } else {
@@ -431,16 +469,54 @@
       `;
       document.getElementById('check').onclick = () => {
         const t = document.getElementById('ans').value;
-        const keywordList = [
-          'legal', 'authority', 'highest', 'law', 'system', 'supreme', 'supreme law', 'conduct',
-          'valid', 'unlawful', 'declare', 'courts', 'court', 'legislature', 'parliament', 'repeal',
-          'make', 'invalidate', 'consistent', 'inconsistent', 'test', 'cannot', 'can', 'must',
-          'act', 'accordance', 'constitution', 'section 2'
+        const conceptGroups = [
+          [
+            {
+              phrases: ['parliamentary sovereignty', 'parliament is supreme'],
+              keywords: ['parliament', 'supreme']
+            },
+            {
+              phrases: ['legislature is the highest law making authority', 'legislature is the ultimate law making authority'],
+              keywords: ['legislature', 'law', 'authority']
+            }
+          ],
+          [
+            {
+              phrases: ['constitution is supreme', 'constitutional supremacy', 'supremacy of the constitution', 'constitution is the supreme law'],
+              keywords: ['constitution', 'supreme']
+            },
+            {
+              phrases: ['section 2'],
+              keywords: ['constitution', 'law']
+            }
+          ],
+          [
+            {
+              phrases: ['courts can invalidate', 'courts can strike down', 'courts may declare invalid'],
+              keywords: ['courts', 'invalidate']
+            },
+            {
+              phrases: ['inconsistent law is invalid', 'invalid to the extent of inconsistency'],
+              keywords: ['inconsistent', 'invalid']
+            }
+          ],
+          [
+            {
+              phrases: ['all conduct must comply with the constitution', 'conduct inconsistent with the constitution is invalid'],
+              keywords: ['conduct', 'constitution', 'invalid']
+            },
+            {
+              phrases: ['must act in accordance with the constitution'],
+              keywords: ['act', 'accordance', 'constitution']
+            }
+          ]
         ];
-        const hits = keywordList.filter((word) => containsAny(t, [word])).length;
+        const hits = conceptHitCount(t, conceptGroups);
         const fb = document.getElementById('fb');
-        if (hits >= 4) {
+        if (hits >= 3) {
           fb.className = 'feedback good';
+          fb.innerHTML = `Great analysis (${hits}/4 concepts). <button id="next">Continue</button>`;
+          document.getElementById('next').onclick = () => setStage(5);
           completeCurrentStage();
           fb.innerHTML = `${randomPraise()} Great analysis (${hits}/6). Use Next to continue.`;
         } else if (hits >= 3) {
@@ -448,7 +524,7 @@
           fb.textContent = `You scored ${hits}/6. Go brush up on definitions and try again.`;
         } else {
           fb.className = 'feedback bad';
-          fb.textContent = `You scored ${hits}/6. Go brush up on definitions and try again.`;
+          fb.textContent = `You scored ${hits}/4 concepts. Compare both systems and try again.`;
         }
       };
     },
@@ -465,6 +541,7 @@
         <p>Select a branch, then choose its correct function.</p>
         <div class="row" id="branches"></div>
         <div id="functions" class="option-grid"></div>
+        <p class="muted">Explain the accountability (use case) system.</p>
         <p class="muted">Using case law, explain the checks and balance system.</p>
         <textarea id="acc"></textarea>
         <button id="check">Submit</button>
@@ -510,6 +587,8 @@
 
         if (functionCorrect && accountabilityOk && caseLawOk) {
           fb.className = 'feedback good';
+          fb.innerHTML = 'Correct structure and accountability reasoning. <button id="next">Continue</button>';
+          document.getElementById('next').onclick = () => setStage(6);
           completeCurrentStage();
           fb.innerHTML = `${randomPraise()} Correct structure and accountability reasoning. Use Next to continue.`;
         } else {
@@ -541,6 +620,8 @@
         const fb = document.getElementById('fb');
         if (hits >= 3) {
           fb.className = 'feedback good';
+          fb.innerHTML = 'Strong explanation of cooperative governance. <button id="next">Continue</button>';
+          document.getElementById('next').onclick = () => setStage(7);
           completeCurrentStage();
           fb.innerHTML = `${randomPraise()} Strong explanation of cooperative governance. Use Next to continue.`;
         } else {
@@ -619,6 +700,8 @@
         const fb = document.getElementById('fb');
         if (ok) {
           fb.className = 'feedback good';
+          fb.innerHTML = 'Excellent allocations. <button id="next">Final stage</button>';
+          document.getElementById('next').onclick = () => setStage(8);
           completeCurrentStage();
           fb.innerHTML = `${randomPraise()} Excellent allocations. Use Next to continue.`;
         } else {
@@ -650,6 +733,8 @@
         const fb = document.getElementById('fb');
         if (hits >= 4) {
           fb.className = 'feedback good';
+          fb.innerHTML = 'Outstanding. You built a constitutional government and defended it with case law! <button id="next">Celebrate</button>';
+          document.getElementById('next').onclick = () => setStage(9);
           completeCurrentStage();
           fb.innerHTML = `${randomPraise()} Outstanding. You built a constitutional government and defended it with case law! Use Next to celebrate.`;
         } else {
@@ -663,6 +748,14 @@
       stageEl.innerHTML = `
         <h2>🎉 You did it! Your constitutional government stands.</h2>
         <p>You completed all stages. Keep building your constitutional law mastery!</p>
+        <p class="muted">Confetti + fireworks activated. Long live constitutional supremacy.</p>
+        <button id="again">Play again</button>
+      `;
+      celebrationFx();
+      document.getElementById('again').onclick = () => setStage(0);
+    }
+  ];
+
         <button id="again">Play again</button>
       `;
       celebrationFx();
