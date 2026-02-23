@@ -21,6 +21,7 @@
       background-image: url("/images/sa-constitution-pattern.png");
       background-repeat: repeat;
       background-color: #f5f2ea;
+      background-color: #f4f1ea;
       color: var(--text);
       min-height: 100vh;
       display: flex;
@@ -98,6 +99,24 @@
     .good { color: var(--good); }
     .bad { color: var(--warn); }
     .progress { font-size: 0.78rem; color: #30415f; padding: 0.55rem 0.75rem; }
+    .progress { font-size: 0.68rem; color: #30415f; padding: 0.35rem 0.55rem; }
+    .banner {
+      background-color: #efe8da;
+    }
+    .nav-controls {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.6rem;
+      padding: 0.55rem;
+    }
+    .nav-controls button {
+      margin-top: 0;
+      flex: 1;
+    }
+    .nav-controls button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
     .row { display: flex; flex-wrap: wrap; gap: 0.6rem; }
     .pill {
       display: inline-block;
@@ -146,6 +165,12 @@
 <main class="game-container">
   <div class="card progress" id="progress">🇿🇦 Stage tracker</div>
   <section class="card" id="stage"></section>
+  <div class="card progress banner" id="progress">🇿🇦 Stage tracker</div>
+  <section class="card" id="stage"></section>
+  <div class="card nav-controls">
+    <button id="backBtn">⬅ Let's rewind</button>
+    <button id="nextBtn" disabled>Keep it moving ➜</button>
+  </div>
 </main>
 <div id="fxLayer" aria-hidden="true"></div>
 
@@ -153,6 +178,22 @@
   const stageEl = document.getElementById('stage');
   const progressEl = document.getElementById('progress');
   const fxLayer = document.getElementById('fxLayer');
+  const backBtn = document.getElementById('backBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  let currentStage = 0;
+  const completedStages = new Set();
+  const unlockedStages = new Set([0]);
+
+  const praises = [
+    'Excellent work!',
+    'Brilliant answer!',
+    'Great progress!',
+    'Superb reasoning!',
+    'Well done!',
+    'Outstanding effort!'
+  ];
+  const randomPraise = () => praises[Math.floor(Math.random() * praises.length)];
 
   const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
   const normalize = (s) => (s || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -201,6 +242,25 @@
     clearFx();
     progressEl.textContent = `Stage ${i + 1} of ${stages.length}`;
     stages[i]();
+  function updateNav() {
+    backBtn.disabled = currentStage === 0;
+    nextBtn.disabled = !completedStages.has(currentStage) || currentStage >= stages.length - 1;
+  }
+
+  function completeCurrentStage() {
+    completedStages.add(currentStage);
+    unlockedStages.add(currentStage + 1);
+    updateNav();
+  }
+
+  function setStage(i) {
+    if (i < 0 || i >= stages.length) return;
+    if (!unlockedStages.has(i) && i > currentStage) return;
+    currentStage = i;
+    clearFx();
+    progressEl.textContent = `Stage ${i + 1} of ${stages.length}`;
+    stages[i]();
+    updateNav();
   }
 
   const constitutionOptions = shuffle([
@@ -254,6 +314,8 @@
           fb.className = 'feedback good';
           fb.innerHTML = 'Great now you can start a government. <button id="next">Next stage</button>';
           document.getElementById('next').onclick = () => setStage(1);
+          completeCurrentStage();
+          fb.innerHTML = `${randomPraise()} Great now you can start a government. Use Next to continue.`;
         } else {
           fb.className = 'feedback bad';
           fb.textContent = 'Not yet. Pick all and only the correct descriptions.';
@@ -288,6 +350,8 @@
           fb.className = 'feedback good';
           fb.innerHTML = `Excellent (${hits} keyword match${hits === 1 ? '' : 'es'}). <button id="next">Continue</button>`;
           document.getElementById('next').onclick = () => setStage(2);
+          completeCurrentStage();
+          fb.innerHTML = `${randomPraise()} Excellent (${hits} keyword match${hits === 1 ? '' : 'es'}). Use Next to continue.`;
         } else {
           fb.className = 'feedback bad';
           fb.textContent = 'Good try. Include at least one key constitutional term.';
@@ -322,6 +386,13 @@
               fb.className = 'feedback good';
               fb.innerHTML = `${s.rightPrompt} <button id="next">Continue</button>`;
               document.getElementById('next').onclick = () => setStage(3);
+              fb.innerHTML = `${randomPraise()} ${s.rightPrompt}`;
+              idx++;
+              render();
+            } else {
+              fb.className = 'feedback good';
+              completeCurrentStage();
+              fb.innerHTML = `${randomPraise()} ${s.rightPrompt} Use Next to continue.`;
             }
           } else {
             fb.className = 'feedback bad';
@@ -364,6 +435,8 @@
           fb.className = 'feedback good';
           fb.innerHTML = `Wow, you could be the president, continue. <button id="next">Next question</button>`;
           document.getElementById('next').onclick = () => setStage(4);
+          completeCurrentStage();
+          fb.innerHTML = `${randomPraise()} Wow, you could be the president, continue. Use Next to continue.`;
         } else {
           fb.className = 'feedback bad';
           fb.textContent = `You included some ideas (${hits}/9), but add more constitutional values and transformative elements.`;
@@ -392,6 +465,8 @@
           fb.className = 'feedback good';
           fb.innerHTML = `Great analysis (${hits}/6). <button id="next">Continue</button>`;
           document.getElementById('next').onclick = () => setStage(5);
+          completeCurrentStage();
+          fb.innerHTML = `${randomPraise()} Great analysis (${hits}/6). Use Next to continue.`;
         } else if (hits >= 3) {
           fb.className = 'feedback bad';
           fb.textContent = `You scored ${hits}/6. Go brush up on definitions and try again.`;
@@ -415,6 +490,7 @@
         <div class="row" id="branches"></div>
         <div id="functions" class="option-grid"></div>
         <p class="muted">Explain the accountability (use case) system.</p>
+        <p class="muted">Using case law, explain the checks and balance system.</p>
         <textarea id="acc"></textarea>
         <button id="check">Submit</button>
         <div class="feedback" id="fb"></div>
@@ -461,6 +537,8 @@
           fb.className = 'feedback good';
           fb.innerHTML = 'Correct structure and accountability reasoning. <button id="next">Continue</button>';
           document.getElementById('next').onclick = () => setStage(6);
+          completeCurrentStage();
+          fb.innerHTML = `${randomPraise()} Correct structure and accountability reasoning. Use Next to continue.`;
         } else {
           fb.className = 'feedback bad';
           fb.textContent = 'Try again, your answer is missing some important points.';
@@ -492,6 +570,8 @@
           fb.className = 'feedback good';
           fb.innerHTML = 'Strong explanation of cooperative governance. <button id="next">Continue</button>';
           document.getElementById('next').onclick = () => setStage(7);
+          completeCurrentStage();
+          fb.innerHTML = `${randomPraise()} Strong explanation of cooperative governance. Use Next to continue.`;
         } else {
           fb.className = 'feedback bad';
           fb.textContent = 'Add more on cases, three spheres, and how powers are divided but cooperative.';
@@ -570,6 +650,8 @@
           fb.className = 'feedback good';
           fb.innerHTML = 'Excellent allocations. <button id="next">Final stage</button>';
           document.getElementById('next').onclick = () => setStage(8);
+          completeCurrentStage();
+          fb.innerHTML = `${randomPraise()} Excellent allocations. Use Next to continue.`;
         } else {
           fb.className = 'feedback bad';
           fb.textContent = 'Some pairings are incorrect. Re-check each sphere carefully.';
@@ -601,6 +683,8 @@
           fb.className = 'feedback good';
           fb.innerHTML = 'Outstanding. You built a constitutional government and defended it with case law! <button id="next">Celebrate</button>';
           document.getElementById('next').onclick = () => setStage(9);
+          completeCurrentStage();
+          fb.innerHTML = `${randomPraise()} Outstanding. You built a constitutional government and defended it with case law! Use Next to celebrate.`;
         } else {
           fb.className = 'feedback bad';
           fb.textContent = 'Solid start. Include more on special master, systemic failure, and tailored judicial remedies.';
@@ -619,6 +703,24 @@
       document.getElementById('again').onclick = () => setStage(0);
     }
   ];
+
+        <button id="again">Play again</button>
+      `;
+      celebrationFx();
+      completeCurrentStage();
+      document.getElementById('again').onclick = () => {
+        completedStages.clear();
+        unlockedStages.clear();
+        unlockedStages.add(0);
+        setStage(0);
+      };
+    }
+  ];
+
+  backBtn.onclick = () => setStage(currentStage - 1);
+  nextBtn.onclick = () => {
+    if (completedStages.has(currentStage)) setStage(currentStage + 1);
+  };
 
   setStage(0);
 </script>
