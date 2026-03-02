@@ -701,19 +701,6 @@
     }
   ];
 
-        <button id="again">Play again</button>
-      `;
-      celebrationFx();
-      completeCurrentStage();
-      document.getElementById('again').onclick = () => {
-        completedStages.clear();
-        unlockedStages.clear();
-        unlockedStages.add(0);
-        setStage(0);
-      };
-    }
-  ];
-
   backBtn.onclick = () => setStage(currentStage - 1);
   nextBtn.onclick = () => {
     if (completedStages.has(currentStage)) setStage(currentStage + 1);
