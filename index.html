@@ -198,16 +198,25 @@
   const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
   const normalize = (s) => (s || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
 
-  const containsAny = (text, phrases) => {
-    const n = normalize(text);
-    return phrases.some(p => n.includes(normalize(p)));
+  const containsLoosePhrase = (text, phrase) => {
+    const textTokens = normalize(text).split(' ').filter(Boolean);
+    const phraseTokens = normalize(phrase).split(' ').filter(Boolean);
+    if (!phraseTokens.length) return false;
+
+    let idx = 0;
+    for (const token of textTokens) {
+      if (token === phraseTokens[idx]) idx++;
+      if (idx === phraseTokens.length) return true;
+    }
+    return false;
   };
 
+  const containsAny = (text, phrases) => phrases.some(p => containsLoosePhrase(text, p));
+
   const hitCount = (text, phraseGroups) => {
-    const n = normalize(text);
     let hits = 0;
     for (const group of phraseGroups) {
-      if (group.some(p => n.includes(normalize(p)))) hits++;
+      if (group.some(p => containsLoosePhrase(text, p))) hits++;
     }
     return hits;
   };
