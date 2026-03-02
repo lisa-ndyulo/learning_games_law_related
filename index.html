@@ -165,8 +165,7 @@
 <main class="game-container">
   <div class="card progress" id="progress">🇿🇦 Stage tracker</div>
   <section class="card" id="stage"></section>
-  <div class="card progress banner" id="progress">🇿🇦 Stage tracker</div>
-  <section class="card" id="stage"></section>
+
   <div class="card nav-controls">
     <button id="backBtn">⬅ Let's rewind</button>
     <button id="nextBtn" disabled>Keep it moving ➜</button>
@@ -238,10 +237,7 @@
 
   const clearFx = () => { fxLayer.innerHTML = ''; };
 
-  function setStage(i) {
-    clearFx();
-    progressEl.textContent = `Stage ${i + 1} of ${stages.length}`;
-    stages[i]();
+
   function updateNav() {
     backBtn.disabled = currentStage === 0;
     nextBtn.disabled = !completedStages.has(currentStage) || currentStage >= stages.length - 1;
@@ -373,33 +369,34 @@
           <button id="check">Check</button>
           <div class="feedback" id="fb"></div>
         `;
-        document.getElementById('check').onclick = () => {
-          const picked = document.querySelector('input[name="tf"]:checked');
-          const fb = document.getElementById('fb');
-          if (!picked) { fb.className = 'feedback bad'; fb.textContent = 'Pick true or false first.'; return; }
-          if (picked.value === s.correct) {
-            if (idx < tfStatements.length - 1) {
-              fb.className = 'feedback good';
-              fb.innerHTML = `${s.rightPrompt} <button id="next">Next statement</button>`;
-              document.getElementById('next').onclick = () => { idx++; render(); };
-            } else {
-              fb.className = 'feedback good';
-              fb.innerHTML = `${s.rightPrompt} <button id="next">Continue</button>`;
-              document.getElementById('next').onclick = () => setStage(3);
-              fb.innerHTML = `${randomPraise()} ${s.rightPrompt}`;
-              idx++;
-              render();
-            } else {
-              fb.className = 'feedback good';
-              completeCurrentStage();
-              fb.innerHTML = `${randomPraise()} ${s.rightPrompt} Use Next to continue.`;
-            }
-          } else {
-            fb.className = 'feedback bad';
-            fb.textContent = s.wrongPrompt;
-          }
-        };
+       document.getElementById('check').onclick = () => {
+  const picked = document.querySelector('input[name="tf"]:checked');
+  const fb = document.getElementById('fb');
+
+  if (!picked) {
+    fb.className = 'feedback bad';
+    fb.textContent = 'Pick true or false first.';
+    return;
+  }
+
+  if (picked.value === s.correct) {
+    if (idx < tfStatements.length - 1) {
+      fb.className = 'feedback good';
+      fb.innerHTML = `${s.rightPrompt} <button id="next">Next statement</button>`;
+      document.getElementById('next').onclick = () => {
+        idx++;
+        render();
       };
+    } else {
+      fb.className = 'feedback good';
+      fb.innerHTML = `${randomPraise()} ${s.rightPrompt} Use Next to continue.`;
+      completeCurrentStage();
+    }
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = s.wrongPrompt;
+  }
+};
       render();
     },
 
