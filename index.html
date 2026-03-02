@@ -18,9 +18,8 @@
     body {
       margin: 0;
       font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background-image: url("public/images/sa-constitution-pattern.png");
+      background-image: url("sa-constitution-pattern.png");
       background-repeat: repeat;
-      background-color: #f5f2ea;
       background-color: #f4f1ea;
       color: var(--text);
       min-height: 100vh;
@@ -98,25 +97,32 @@
     .feedback { margin-top: 0.7rem; font-weight: 600; }
     .good { color: var(--good); }
     .bad { color: var(--warn); }
-    .progress { font-size: 0.78rem; color: #30415f; padding: 0.55rem 0.75rem; }
     .progress { font-size: 0.68rem; color: #30415f; padding: 0.35rem 0.55rem; }
     .banner {
       background-image: url("public/images/banner-sa-const.png");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
     }
-    .nav-controls {
+    .nav-buttons {
       display: flex;
-      justify-content: space-between;
-      gap: 0.6rem;
-      padding: 0.55rem;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 24px;
     }
-    .nav-controls button {
+
+    .nav-buttons button {
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      width: auto;
+      min-width: 160px;
       margin-top: 0;
-      flex: 1;
     }
-    .nav-controls button:disabled {
+
+    .nav-buttons button:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
@@ -169,9 +175,9 @@
   <div class="card progress" id="progress">🇿🇦 Stage tracker</div>
   <section class="card" id="stage"></section>
 
-  <div class="card nav-controls">
-    <button id="backBtn">⬅ Let's rewind</button>
-    <button id="nextBtn" disabled>Keep it moving ➜</button>
+  <div class="nav-buttons">
+    <button id="backBtn" class="back-btn">← Let's rewind</button>
+    <button id="nextBtn" class="next-btn" disabled>Keep it moving →</button>
   </div>
 </main>
 <div id="fxLayer" aria-hidden="true"></div>
@@ -260,6 +266,13 @@
     progressEl.textContent = `Stage ${i + 1} of ${stages.length}`;
     stages[i]();
     updateNav();
+  }
+
+  function resetGame() {
+    completedStages.clear();
+    unlockedStages.clear();
+    unlockedStages.add(0);
+    setStage(0);
   }
 
   const constitutionOptions = shuffle([
@@ -700,7 +713,7 @@
         <button id="again">Play again</button>
       `;
       celebrationFx();
-      document.getElementById('again').onclick = () => setStage(0);
+      document.getElementById('again').onclick = resetGame;
     }
   ];
 
