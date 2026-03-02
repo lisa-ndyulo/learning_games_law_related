@@ -197,6 +197,7 @@
 
   const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
   const normalize = (s) => (s || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  const negationTokens = new Set(['not', 'no', 'never', 'none', 'cannot', 'cant', 'without']);
 
   const containsLoosePhrase = (text, phrase) => {
     const textTokens = normalize(text).split(' ').filter(Boolean);
@@ -204,8 +205,20 @@
     if (!phraseTokens.length) return false;
 
     let idx = 0;
-    for (const token of textTokens) {
-      if (token === phraseTokens[idx]) idx++;
+    let lastMatch = -1;
+    for (let i = 0; i < textTokens.length; i++) {
+      const token = textTokens[i];
+      if (token !== phraseTokens[idx]) continue;
+
+      if (lastMatch >= 0) {
+        const between = textTokens.slice(lastMatch + 1, i);
+        if (between.some((w) => negationTokens.has(w) || w.endsWith('nt'))) {
+          return false;
+        }
+      }
+
+      lastMatch = i;
+      idx++;
       if (idx === phraseTokens.length) return true;
     }
     return false;
