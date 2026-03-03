@@ -127,6 +127,9 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+    #stage {
+      min-height: 260px;
+    }
     .row { display: flex; flex-wrap: wrap; gap: 0.6rem; }
     .pill {
       display: inline-block;
@@ -264,7 +267,7 @@
     if (!unlockedStages.has(i) && i > currentStage) return;
     currentStage = i;
     clearFx();
-    progressEl.textContent = `Stage ${i + 1} of ${stages.length}`;
+    progressEl.textContent = `Stage ${i + 1}`;
     stages[i]();
     updateNav();
   }
