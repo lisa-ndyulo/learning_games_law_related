@@ -18,9 +18,11 @@
     body {
       margin: 0;
       font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background-color: #f4f1ea;
-      color: var(--text);
       min-height: 100vh;
+      background-color: #f5f2ea;
+      background-image: url("public/images/sa-constitution-pattern.png");
+      background-repeat: repeat;
+      color: var(--text);
       display: flex;
       flex-direction: column;
     }
@@ -28,15 +30,20 @@
     #app, .app, #root, .game-container {
       background: transparent;
     }
-    header {
-      background: var(--primary);
+    header, .header, .top-banner {
+      background-image: url("public/images/banner-sa-const.png");
+      background-repeat: repeat;
+      background-size: 120px auto;
+      background-color: #002395;
       color: white;
+    }
+    header {
       padding: 1rem;
       text-align: center;
       position: sticky;
       top: 0;
       z-index: 4;
-      box-shadow: 0 6px 20px rgba(47, 91, 234, 0.35);
+      box-shadow: 0 6px 20px rgba(0, 35, 149, 0.35);
     }
     header h1 {
       margin: 0;
@@ -99,17 +106,23 @@
     .banner {
       background-color: #efe8da;
     }
-    .nav-controls {
+    .nav-buttons {
       display: flex;
-      justify-content: space-between;
-      gap: 0.6rem;
+      justify-content: center;
+      gap: 14px;
+      margin-top: 16px;
       padding: 0.55rem;
     }
-    .nav-controls button {
+    .nav-buttons button {
       margin-top: 0;
-      flex: 1;
+      padding: 10px 18px;
+      font-size: 15px;
+      border-radius: 10px;
+      width: auto;
+      min-width: 140px;
+      max-width: 220px;
     }
-    .nav-controls button:disabled {
+    .nav-buttons button:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
@@ -155,13 +168,14 @@
   </style>
 </head>
 <body>
-<header>
+<header class="top-banner">
   <h1>Constitute a State</h1>
+  <p id="stageBanner" class="muted" style="color:#e6ebff;margin:0.35rem 0 0;">Stage 1</p>
 </header>
 <main class="game-container">
   <div class="card progress banner" id="progress">🇿🇦 Stage tracker</div>
   <section class="card" id="stage"></section>
-  <div class="card nav-controls">
+  <div class="card nav-buttons">
     <button id="backBtn">⬅ Let's rewind</button>
     <button id="nextBtn" disabled>Keep it moving ➜</button>
   </div>
@@ -174,6 +188,7 @@
   const fxLayer = document.getElementById('fxLayer');
   const backBtn = document.getElementById('backBtn');
   const nextBtn = document.getElementById('nextBtn');
+  const stageBannerEl = document.getElementById('stageBanner');
 
   let currentStage = 0;
   const completedStages = new Set();
@@ -191,17 +206,56 @@
 
   const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
   const normalize = (s) => (s || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  const tokenize = (s) => normalize(s).split(' ').filter(Boolean);
+
+  const hasOrderedPhrase = (textTokens, phraseTokens) => {
+    let cursor = 0;
+    for (const token of textTokens) {
+      if (token === phraseTokens[cursor]) cursor += 1;
+      if (cursor === phraseTokens.length) return true;
+    }
+    return false;
+  };
+
+  const isNegatedPhrase = (textTokens, phraseTokens) => {
+    const negators = new Set(['not', 'never', 'no']);
+    for (let i = 0; i < textTokens.length; i++) {
+      if (textTokens[i] !== phraseTokens[0]) continue;
+      let p = 0;
+      let j = i;
+      while (j < textTokens.length && p < phraseTokens.length) {
+        if (textTokens[j] === phraseTokens[p]) p += 1;
+        j += 1;
+      }
+      if (p === phraseTokens.length) {
+        const windowStart = Math.max(0, i - 3);
+        const windowEnd = Math.min(textTokens.length, j + 2);
+        for (let k = windowStart; k < windowEnd; k++) {
+          if (negators.has(textTokens[k])) return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  const loosePhraseMatch = (text, phrase) => {
+    const textTokens = tokenize(text);
+    const phraseTokens = tokenize(phrase);
+    if (phraseTokens.length === 0) return false;
+    if (!hasOrderedPhrase(textTokens, phraseTokens)) return false;
+    return !isNegatedPhrase(textTokens, phraseTokens);
+  };
 
   const containsAny = (text, phrases) => {
     const n = normalize(text);
-    return phrases.some(p => n.includes(normalize(p)));
+    return phrases.some((p) => n.includes(normalize(p)) || loosePhraseMatch(text, p));
   };
 
   const hitCount = (text, phraseGroups) => {
     const n = normalize(text);
     let hits = 0;
     for (const group of phraseGroups) {
-      if (group.some(p => n.includes(normalize(p)))) hits++;
+      if (group.some((p) => n.includes(normalize(p)) || loosePhraseMatch(text, p))) hits++;
     }
     return hits;
   };
@@ -249,6 +303,7 @@
     currentStage = i;
     clearFx();
     progressEl.textContent = `Stage ${i + 1} of ${stages.length}`;
+    stageBannerEl.textContent = `Stage ${i + 1}: ${stageNames[i]}`;
     stages[i]();
     updateNav();
   }
@@ -261,6 +316,19 @@
     { text: 'Only applies during elections', correct: false },
     { text: 'Optional values with no legal force', correct: false }
   ]);
+
+  const stageNames = [
+    'What is a constitution?',
+    'Constitutional functions',
+    'True or false values',
+    'Transformative constitutionalism',
+    'Sovereignty and supremacy',
+    'Government structure',
+    'Cooperative governance',
+    'Branches and spheres',
+    'Final case-law challenge',
+    'Celebration'
+  ];
 
   const tfStatements = [
     {
@@ -431,13 +499,15 @@
       `;
       document.getElementById('check').onclick = () => {
         const t = document.getElementById('ans').value;
-        const keywordList = [
-          'legal', 'authority', 'highest', 'law', 'system', 'supreme', 'supreme law', 'conduct',
-          'valid', 'unlawful', 'declare', 'courts', 'court', 'legislature', 'parliament', 'repeal',
-          'make', 'invalidate', 'consistent', 'inconsistent', 'test', 'cannot', 'can', 'must',
-          'act', 'accordance', 'constitution', 'section 2'
+        const phraseGroups = [
+          ['parliamentary sovereignty', 'parliament is supreme', 'legislature is the ultimate law making authority'],
+          ['constitutional supremacy', 'constitution is supreme law', 'supremacy of the constitution'],
+          ['section 2'],
+          ['courts can invalidate law', 'courts may strike down inconsistent law', 'declare invalid inconsistent law'],
+          ['parliament can make or repeal any law'],
+          ['state conduct must be consistent with the constitution']
         ];
-        const hits = keywordList.filter((word) => containsAny(t, [word])).length;
+        const hits = hitCount(t, phraseGroups);
         const fb = document.getElementById('fb');
         if (hits >= 4) {
           fb.className = 'feedback good';
