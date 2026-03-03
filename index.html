@@ -187,7 +187,7 @@
 <div id="fxLayer" aria-hidden="true"></div>
 
 <script>
-  const stageEl = document.getElementById('stage');
+  const stageEl = document.getElementById("stage");
   const progressEl = document.getElementById('progress');
   const fxLayer = document.getElementById('fxLayer');
   const backBtn = document.getElementById('backBtn');
@@ -270,6 +270,10 @@
     progressEl.textContent = `Stage ${i + 1}`;
     stages[i]();
     updateNav();
+  }
+
+  function renderStage(stageIndex) {
+    setStage(stageIndex);
   }
 
   function resetGame() {
@@ -726,7 +730,16 @@
     if (completedStages.has(currentStage)) setStage(currentStage + 1);
   };
 
-  setStage(0);
+  document.addEventListener("DOMContentLoaded", () => {
+    console.log("DOM loaded");
+
+    const stageEl = document.getElementById("stage");
+    if (stageEl) {
+      stageEl.innerHTML = "<p style='color:white'>TEST CONTENT</p>";
+    }
+  });
+
+  renderStage(currentStage);
 </script>
 </body>
 </html>
