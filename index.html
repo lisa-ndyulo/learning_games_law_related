@@ -18,7 +18,7 @@
     body {
       margin: 0;
       font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background-image: url("sa-constitution-pattern.png");
+      background-image: url("public/images/sa-constitution-pattern.png");
       background-repeat: repeat;
       background-color: #f4f1ea;
       color: var(--text);
@@ -176,7 +176,7 @@
   <h1>Constitute a State</h1>
 </header>
 <main class="game-container">
-  <div class="card progress" id="progress">🇿🇦 Stage tracker</div>
+  <div class="card progress banner" id="progress">🇿🇦 Stage tracker</div>
   <section class="card" id="stage"></section>
 
   <div class="nav-buttons">
@@ -252,6 +252,7 @@
 
 
   function updateNav() {
+    backBtn.hidden = currentStage === 0;
     backBtn.disabled = currentStage === 0;
     nextBtn.disabled = !completedStages.has(currentStage) || currentStage >= stages.length - 1;
   }
@@ -717,7 +718,6 @@
       stageEl.innerHTML = `
         <h2>🎉 You did it! Your constitutional government stands.</h2>
         <p>You completed all stages. Keep building your constitutional law mastery!</p>
-        <p class="muted">Confetti + fireworks activated. Long live constitutional supremacy.</p>
         <button id="again">Play again</button>
       `;
       celebrationFx();
@@ -729,16 +729,6 @@
   nextBtn.onclick = () => {
     if (completedStages.has(currentStage)) setStage(currentStage + 1);
   };
-
-  document.addEventListener("DOMContentLoaded", () => {
-    console.log("DOM loaded");
-
-    const stageEl = document.getElementById("stage");
-    if (stageEl) {
-      stageEl.innerHTML = "<p style='color:white'>TEST CONTENT</p>";
-    }
-  });
-
   renderStage(currentStage);
 </script>
 </body>
