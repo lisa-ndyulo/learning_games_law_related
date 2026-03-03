@@ -247,15 +247,13 @@
   };
 
   const containsAny = (text, phrases) => {
-    const n = normalize(text);
-    return phrases.some((p) => n.includes(normalize(p)) || loosePhraseMatch(text, p));
+    return phrases.some((p) => loosePhraseMatch(text, p));
   };
 
   const hitCount = (text, phraseGroups) => {
-    const n = normalize(text);
     let hits = 0;
     for (const group of phraseGroups) {
-      if (group.some((p) => n.includes(normalize(p)) || loosePhraseMatch(text, p))) hits++;
+      if (group.some((p) => loosePhraseMatch(text, p))) hits++;
     }
     return hits;
   };
